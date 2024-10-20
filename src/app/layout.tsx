@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+import { cn } from "@/lib/utils";
+
+const inter = Inter({subsets: ["latin", "cyrillic"]});
+// 这是在全局范围内引入的字体，可以在任何地方使用，不需要再次引入
+// subsets: ["latin"] 表示只引入拉丁字体，以减小字体文件的大小，
+// 如果需要中文，可以使用 ["latin", "cjk"]，或者 ["latin", "cjk", "cyrillic"] 等，具体可以参考 https://fonts.google.com/specimen/Inter?subset=latin,cyrillic
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -26,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={cn(inter.className, "antialiased min-h-screen")}
       >
         {children}
       </body>
