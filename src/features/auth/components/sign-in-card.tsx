@@ -24,25 +24,42 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import Link from "next/link";
-
-const formSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1,"Required"),
-})
+import { loginSchema } from "../schemas";
+import { useLogin } from "../api/use-login";
+import { useEffect, useState } from "react";
+import { LoaderCircle } from "lucide-react"
+import { toast } from "sonner";
 
 export const SignInCard = () => {
-  const form= useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const { mutate, status, data } = useLogin();
+  const [ isLoading, setIsLoading ] = useState(false);
+
+  const form= useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: ""
     }
   })
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // TODO: Handle form submission
-    console.log(values)
+  const onSubmit = (values: z.infer<typeof loginSchema>) => {
+    // mutate相当于一个异步的请求，类似于api.post
+    mutate({ // 这里调用了useLogin返回的mutation, 传入了一个json和param
+      json: values,
+    });
   }
+
+  useEffect(()=>{
+    if(status==="pending") setIsLoading(true)
+      else if(status!== "idle") {
+        setIsLoading(false)
+        if(!data?.success) {
+          toast.error(data?.message)
+        }else {
+          toast.success(data?.message)
+        }
+      }
+  },[status,data])
 
   return (
     <Card className="w-full h-full md:w-[487px] border-none shadow-none">
@@ -90,7 +107,11 @@ export const SignInCard = () => {
               )}
             />
             <Button size={"lg"} className="w-full">
-              Login
+              {
+                isLoading ? 
+                <LoaderCircle className="animate-spin"/>
+                : "Login"
+              }
             </Button>
           </form>
         </Form>

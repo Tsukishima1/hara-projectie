@@ -10,11 +10,11 @@ import { z } from "zod";
 import { DottedSeparator } from "@/components/dotted-seperator";
 import { Button } from "@/components/ui/button";
 import {
-  Card, 
+  Card,
   CardContent,
   CardDescription,
-  CardHeader, 
-  CardTitle 
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,16 +25,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import Link from "next/link";
-
-const formSchema = z.object({
-  name: z.string().trim().min(1,"Required"),
-  email: z.string().email(),
-  password: z.string().min(8,"Minimum of 8 characters"),
-})
+import { registerSchema } from "../schemas";
+import { useRegister } from "../api/use-register";
+import { useEffect, useState } from 'react';
+import { toast } from "sonner";
+import { LoaderCircle } from 'lucide-react';
 
 export const SignUpCard = () => {
-  const form= useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const { mutate, status, data } = useRegister();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const form = useForm<z.infer<typeof registerSchema>>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -42,10 +44,22 @@ export const SignUpCard = () => {
     }
   })
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // TODO: Handle form submission
-    console.log(values)
+  const onSubmit = (values: z.infer<typeof registerSchema>) => {
+    console.log(values);
+    mutate({ json: values });
   }
+
+  useEffect(() => {
+    if (status === "pending") setIsLoading(true)
+    else if(status!== "idle") {
+      setIsLoading(false)
+      if (!data?.success) {
+        toast.error(data?.message)
+      } else {
+        toast.success(data?.message)
+      }
+    }
+  }, [status, data])
 
   return (
     <Card className="w-full h-full md:w-[487px] border-none shadow-none">
@@ -67,72 +81,76 @@ export const SignUpCard = () => {
         <DottedSeparator />
       </div>
       <CardContent className="p-7">
-      <Form {...form}>
-        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-          <FormField
-            name="name"
-            control={form.control}
-            render={({ field })=>(
-              <FormItem>
-                <FormControl>
-                  <Input 
-                    {...field}
-                    type="text" 
-                    placeholder="Enter your name"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="email"
-            control={form.control}
-            render={({ field })=>(
-              <FormItem>
-                <FormControl>
-                  <Input 
-                    {...field}
-                    type="email" 
-                    placeholder="Enter your email"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="password"
-            control={form.control}
-            render={({ field })=>(
-              <FormItem>
-                <FormControl>
-                  <Input 
-                    {...field}
-                    type="password" 
-                    placeholder="Enter your password"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button size={"lg"} className="w-full">
-            Login
-          </Button>
-        </form>
-      </Form>
+        <Form {...form}>
+          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+            <FormField
+              name="name"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="text"
+                      placeholder="Enter your name"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="email"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="Enter your email"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="password"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder="Enter your password"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button size={"lg"} className="w-full">
+              {
+                isLoading ?
+                  <LoaderCircle className="animate-spin" />
+                  : "Register"
+              }
+            </Button>
+          </form>
+        </Form>
       </CardContent>
       <div className="px-7">
         <DottedSeparator />
       </div>
       <CardContent className="p-7 flex flex-col gap-y-4">
         <Button variant={"secondary"} size={"lg"} className="w-full">
-          <FcGoogle style={{width:"1.3rem",height:"1.3rem"}}/>
+          <FcGoogle style={{ width: "1.3rem", height: "1.3rem" }} />
           Login with Google
         </Button>
         <Button variant={"secondary"} size={"lg"} className="w-full">
-          <FaGithub style={{width:"1.3rem",height:"1.3rem"}}/>
+          <FaGithub style={{ width: "1.3rem", height: "1.3rem" }} />
           Login with Github
         </Button>
       </CardContent>
