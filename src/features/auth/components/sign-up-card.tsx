@@ -32,7 +32,7 @@ import { toast } from "sonner";
 import { LoaderCircle } from 'lucide-react';
 
 export const SignUpCard = () => {
-  const { mutate, status, data } = useRegister();
+  const { mutate, status, data, isPending } = useRegister();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof registerSchema>>({
@@ -131,7 +131,7 @@ export const SignUpCard = () => {
                 </FormItem>
               )}
             />
-            <Button size={"lg"} className="w-full">
+            <Button size={"lg"} disabled={isPending} className="w-full">
               {
                 isLoading ?
                   <LoaderCircle className="animate-spin" />
@@ -145,11 +145,11 @@ export const SignUpCard = () => {
         <DottedSeparator />
       </div>
       <CardContent className="p-7 flex flex-col gap-y-4">
-        <Button variant={"secondary"} size={"lg"} className="w-full">
+        <Button variant={"secondary"} size={"lg"} disabled={isPending} className="w-full">
           <FcGoogle style={{ width: "1.3rem", height: "1.3rem" }} />
           Login with Google
         </Button>
-        <Button variant={"secondary"} size={"lg"} className="w-full">
+        <Button variant={"secondary"} size={"lg"} disabled={isPending} className="w-full">
           <FaGithub style={{ width: "1.3rem", height: "1.3rem" }} />
           Login with Github
         </Button>
