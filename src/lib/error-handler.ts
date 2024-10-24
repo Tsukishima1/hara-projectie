@@ -2,6 +2,7 @@ import { AppwriteException } from "node-appwrite";
   
 export const ErrorHandler = (error: unknown) => {
     if (error instanceof AppwriteException) {
+      // 如果是AppwriteException，返回错误信息，状态码
       return { success: false, message: error.message, statusCode: error.code };
     }
   

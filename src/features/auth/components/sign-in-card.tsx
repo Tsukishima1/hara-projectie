@@ -136,7 +136,7 @@ export const SignInCard = () => {
         <div className="text-center">
           Don&apos;t have an account?{" "}
           <Link href="/sign-in">
-            <span className="text-violet-600 underline underline-offset-auto">Sign up</span>
+            <span className="text-[#60a5fa] underline underline-offset-auto">Sign up</span>
           </Link>
         </div>
       </CardContent>
