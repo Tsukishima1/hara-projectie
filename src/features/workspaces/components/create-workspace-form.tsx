@@ -46,11 +46,14 @@ export const CreateWorkspaceForm = ({ onCancel }: CreateWorkspaceFormProps) => {
       image: values.image instanceof File ? values.image : "",
     };
 
-    mutate({ form: finalValues },{
-      onSuccess: () => {
-        form.reset();
+    mutate(
+      { form: finalValues },
+      {
+        onSuccess: () => {
+          form.reset();
+        },
       }
-    });
+    );
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,7 +84,11 @@ export const CreateWorkspaceForm = ({ onCancel }: CreateWorkspaceFormProps) => {
                   <FormItem>
                     <FormLabel>Workspace Name</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter workspace name" />
+                      <Input
+                        {...field}
+                        placeholder="Enter workspace name"
+                        disabled={isPending}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -154,13 +161,11 @@ export const CreateWorkspaceForm = ({ onCancel }: CreateWorkspaceFormProps) => {
                 Cancel
               </Button>
               <Button type="submit" size="lg" disabled={isPending}>
-                {
-                  isPending ? (
-                    <LoaderCircle className="animate-spin" />
-                  ) : (
-                    "Create Workspace"
-                  )
-                }
+                {isPending ? (
+                  <LoaderCircle className="animate-spin" />
+                ) : (
+                  "Create Workspace"
+                )}
               </Button>
             </div>
           </form>
