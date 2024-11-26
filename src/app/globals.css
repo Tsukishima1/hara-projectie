@@ -76,3 +76,12 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.hide-scrollerbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollerbar::-webkit-scrollbar {
+  display: none;
+}
