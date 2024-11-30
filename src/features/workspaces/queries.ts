@@ -38,6 +38,7 @@ interface GetWorkspaceProps {
   workspaceId: string;
 }
 
+// 用于获取工作区具体信息（查看下方<Workspace>的定义）
 export const getWorkspace = async ({ workspaceId }: GetWorkspaceProps) => {
   try {
     const { databases, account } = await createSessionClient();
@@ -55,6 +56,31 @@ export const getWorkspace = async ({ workspaceId }: GetWorkspaceProps) => {
     );
 
     return workspace;
+  } catch {
+    return null;
+  }
+};
+
+interface GetWorkspaceInfoProps {
+  workspaceId: string;
+}
+
+// 用于获取工作区信息（工作区名称）
+export const getWorkspaceInfo = async ({ workspaceId }: GetWorkspaceInfoProps) => {
+  try {
+    const { databases } = await createSessionClient();
+
+    // 此处没有使用 getMember，是因为不需要验证用户是否是工作区成员，这是一个公开的链接，不需要权限
+
+    const workspace = await databases.getDocument<Workspace>(
+      DATABASE_ID,
+      WORKSPACES_ID,
+      workspaceId
+    );
+
+    return {
+      name: workspace.name,
+    };
   } catch {
     return null;
   }

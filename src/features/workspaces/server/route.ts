@@ -12,6 +12,8 @@ import { ID, Query } from "node-appwrite";
 import { MemberRole } from "@/features/members/types";
 import { generateInviteCode } from "@/lib/utils";
 import { getMember } from "@/features/members/utils";
+import { z } from "zod";
+import { Workspace } from "../types";
 
 const app = new Hono()
   .get("/", sessionMiddleware, async (c) => {
@@ -37,8 +39,8 @@ const app = new Hono()
   })
   .post(
     "/",
-    zValidator("form", createWorkspaceSchema),
     sessionMiddleware,
+    zValidator("form", createWorkspaceSchema), // 接收一个名为 form 的对象并验证
     async (c) => {
       const databases = c.get("databases");
       const storage = c.get("storage");
@@ -89,7 +91,7 @@ const app = new Hono()
   .patch(
     "/:workspaceId",
     sessionMiddleware,
-    zValidator("form", updateWorkspaceSchema),
+    zValidator("form", updateWorkspaceSchema), // 接收一个名为 form 的对象并验证
     async (c) => {
       const databases = c.get("databases");
       const storage = c.get("storage");
@@ -127,7 +129,7 @@ const app = new Hono()
         uploadedImageUrl = `data:image/png;base64,${Buffer.from(
           arrayBuffer
         ).toString("base64")}`;
-      } else { 
+      } else {
         // 如果 image 不是 File 类型，那么就是一个字符串，说明用户没有上传新的图片，直接使用原来的图片
         uploadedImageUrl = image;
       }
@@ -143,6 +145,100 @@ const app = new Hono()
       );
 
       return c.json({ data: workspace });
+    }
+  )
+  .delete("/:workspaceId", sessionMiddleware, async (c) => {
+    const databases = c.get("databases");
+    const user = c.get("user");
+
+    const { workspaceId } = c.req.param();
+
+    const member = await getMember({
+      databases,
+      workspaceId,
+      userId: user.$id,
+    });
+
+    if (!member || member.role !== MemberRole.ADMIN) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    // TODO: Delete members, projects, and tasks
+
+    await databases.deleteDocument(DATABASE_ID, WORKSPACES_ID, workspaceId);
+
+    return c.json({ data: { $id: workspaceId } });
+  })
+  .post("/:workspaceId/reset-invite-code", sessionMiddleware, async (c) => {
+    const databases = c.get("databases");
+    const user = c.get("user");
+
+    const { workspaceId } = c.req.param();
+
+    const member = await getMember({
+      databases,
+      workspaceId,
+      userId: user.$id,
+    });
+
+    if (!member || member.role !== MemberRole.ADMIN) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const workspace = await databases.updateDocument(
+      DATABASE_ID,
+      WORKSPACES_ID,
+      workspaceId,
+      {
+        inviteCode: generateInviteCode(6),
+      }
+    );
+
+    return c.json({ data: workspace });
+  })
+  .post(
+    "/:workspaceId/join",
+    sessionMiddleware,
+    zValidator("json", z.object({ code: z.string() })), // 接收一个名为 code 的字符串并验证
+    async (c) => {
+      const { workspaceId } = c.req.param();
+      const { code } = c.req.valid("json");
+
+      const databases = c.get("databases");
+      const user = c.get("user");
+
+      const member = await getMember({
+        databases,
+        workspaceId,
+        userId: user.$id,
+      });
+
+      if (member) {
+        return c.json({ error: "Already a member" }, 400);
+      }
+
+      const workspace = await databases.getDocument<Workspace>(
+        DATABASE_ID,
+        WORKSPACES_ID,
+        workspaceId
+      )
+
+      if (workspace.inviteCode!==code) {
+        return c.json({ error: "Invalid invite code" }, 400);
+      }
+
+      await databases.createDocument( // 创建一个新的文档，表示用户加入了工作区
+        DATABASE_ID, 
+        MEMBERS_ID, 
+        ID.unique(), 
+        {
+          userId: user.$id,
+          workspaceId,
+          role: MemberRole.MEMBER,
+        }
+      );
+
+      return c.json({ data: workspace }); // 返回工作区信息
     }
   );
 

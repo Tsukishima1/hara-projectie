@@ -8,6 +8,7 @@ interface GetMemberProps {
   userId: string;
 }
 
+// 用于获取成员信息，根据 workspaceId 和 userId 查询
 export const getMember = async ({
   databases,
   workspaceId,
