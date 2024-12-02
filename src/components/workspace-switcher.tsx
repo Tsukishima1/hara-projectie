@@ -33,14 +33,14 @@ export const WorkspaceSwitcher = () => {
         <RiAddCircleFill onClick={open} className="size-5 text-neutral-500 cursor-pointer hover:opacity-75 transition" />
       </div>
       <Select onValueChange={onSelect} value={workspaceId}>
-        <SelectTrigger className="w-full bg-neutral-200 font-medium p-1">
+        <SelectTrigger className="w-full bg-neutral-200 font-medium p-2 rounded-lg">
           <SelectValue placeholder="No workspace selected" />
         </SelectTrigger>
         <SelectContent>
           {workspaces?.documents.map((workspace)=>(
             <SelectItem key={workspace.$id} value={workspace.$id}>
               <div className="flex justify-start items-center gap-3 font-medium">
-                <WorkspaceAvatar name={workspace.name} image={workspace.imageUrl}/>
+                <WorkspaceAvatar name={workspace.name} image={workspace.imageUrl} className="size-8"/>
                 <span className="truncate">{workspace.name}</span>
               </div>
             </SelectItem>

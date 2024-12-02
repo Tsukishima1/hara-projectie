@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeftIcon, MoreVerticalIcon } from "lucide-react";
+import { ArrowLeftIcon, LoaderIcon, MoreVerticalIcon } from "lucide-react";
 import { DottedSeparator } from "@/components/dotted-seperator";
 
 export const MemberList = () => {
@@ -29,7 +29,7 @@ export const MemberList = () => {
     "This member will be removed from the workspace",
     "destructive"
   );
-  const { data } = useGetMembers({ workspaceId });
+  const { data, isPending:isGettingMembers } = useGetMembers({ workspaceId });
 
   const { mutate:deleteMember, isPending:isDeletingMember } = useDeleteMember();
   const { mutate:updateMember, isPending:isUpdatingMember } = useUpdateMember();
@@ -68,6 +68,9 @@ export const MemberList = () => {
         <DottedSeparator />
       </div>
       <CardContent className="p-7">
+        {
+          isGettingMembers && <LoaderIcon className="size-8 animate-spin m-auto py-4" />
+        }
         {data?.documents.map((member, index) => (
           <Fragment key={member.$id}>
             <div className="flex items-center gap-2 py-2">
@@ -82,8 +85,11 @@ export const MemberList = () => {
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="ml-auto" variant="secondary" size="icon">
-                    <MoreVerticalIcon className="size-4 text-muted-foreground" />
+                  <Button className="ml-auto" variant="secondary" size="icon" disabled={isDeletingMember||isUpdatingMember}>
+                    {
+                      isDeletingMember||isUpdatingMember ? <LoaderIcon className="size-4 animate-spin" /> 
+                      : <MoreVerticalIcon className="size-4 text-muted-foreground" />
+                    }
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="bottom" align="end">
