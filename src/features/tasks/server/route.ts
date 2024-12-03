@@ -6,7 +6,7 @@ import { getMember } from "@/features/members/utils";
 import { DATABASE_ID, MEMBERS_ID, PROJECTS_ID, TASKS_ID } from "@/config";
 import { z } from "zod";
 import { ID, Query } from "node-appwrite";
-import { TaskStatus } from "../types";
+import { Task, TaskStatus } from "../types";
 import { createAdminClient } from "@/lib/appwrite";
 import { Project } from "@/features/projects/types";
 
@@ -75,7 +75,7 @@ const app = new Hono()
       query.push(Query.equal("name", search));
     }
 
-    const tasks = await databases.listDocuments(DATABASE_ID, TASKS_ID, query);
+    const tasks = await databases.listDocuments<Task>(DATABASE_ID, TASKS_ID, query);
 
     const projectIds = tasks.documents.map((task) => task.projectId);
     const assigneeIds = tasks.documents.map((task) => task.assigneeId);
@@ -83,28 +83,29 @@ const app = new Hono()
     const projects = await databases.listDocuments<Project>(
       DATABASE_ID,
       PROJECTS_ID,
-      projectIds.length>0?[Query.contains("$id", projectIds)]:[] // 查询任务所属的项目, 用于展示项目名称
+      projectIds.length>0?[Query.contains("$id", projectIds)]:[] 
     );
 
     const members = await databases.listDocuments(
       DATABASE_ID,
       MEMBERS_ID,
-      assigneeIds.length>0?[Query.contains("$id", assigneeIds)]:[] // 查询任务负责人的信息，用于展示负责人名称
+      assigneeIds.length>0?[Query.contains("$id", assigneeIds)]:[] 
     );
 
-    const assignees = await Promise.all(
-      members.documents.map(async (member) => {
+    const assignees = await Promise.all( 
+      members.documents.map(async (member)=> {
         const user = await users.get(member.userId);
+
         return {
           ...member,
           name: user.name,
           email: user.email,
         }
       })
-    );
+    )
 
     // 将任务的项目名称和负责人名称添加到任务数据中, 以便前端展示
-    const data = tasks.documents.map((task) => {
+    const populatedTasks = tasks.documents.map((task) => {
       const project = projects.documents.find((project) => project.$id === task.projectId);
       const assignee = assignees.find((assignee) => assignee.$id === task.assigneeId);
 
@@ -115,7 +116,10 @@ const app = new Hono()
       }
     });
 
-    return c.json({data});
+    return c.json({data: {
+      ...tasks,
+      documents: populatedTasks,
+    }});
   }
 )
 .post(
