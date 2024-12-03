@@ -1,18 +1,25 @@
 import { useGetMembers } from "@/features/members/api/use-get-members";
 import { useGetProjects } from "@/features/projects/api/use-get-projects";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
+import { useGetTask } from "../api/use-get-task";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader } from "lucide-react";
-import { CreateTaskForm } from "./create-task-form";
+import { EditTaskForm } from "./edit-task-form";
 
-interface CreateTaskFormWrapperProps {
+interface EditTaskFormWrapperProps {
   onCancel: () => void;
+  id: string;
 }
 
-export const CreateTaskFormWrapper = ({
+export const EditTaskFormWrapper = ({
   onCancel,
-}: CreateTaskFormWrapperProps) => {
+  id,
+}: EditTaskFormWrapperProps) => {
   const workspaceId = useWorkspaceId();
+
+  const { data: initialValues, isLoading: isLoadingTask } = useGetTask({
+    taskId: id,
+  });
 
   // 获取项目列表、成员列表
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects({
@@ -35,7 +42,7 @@ export const CreateTaskFormWrapper = ({
   }));
 
   // 是否正在加载
-  const isLoading = isLoadingProjects || isLoadingMembers;
+  const isLoading = isLoadingProjects || isLoadingMembers || isLoadingTask;
 
   if (isLoading) {
     return (
@@ -47,11 +54,14 @@ export const CreateTaskFormWrapper = ({
     );
   }
 
+  if(!initialValues) return null;
+
   return (
-    <CreateTaskForm 
+    <EditTaskForm 
       onCancel={onCancel}
       projectOptions={projectOptions??[]}
       memberOptions={memberOptions??[]}
+      initialValues={initialValues}
     />
   );
 };

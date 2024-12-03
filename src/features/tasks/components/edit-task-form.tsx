@@ -5,12 +5,12 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 
-import { TaskStatus } from "../types";
+import { Task, TaskStatus } from "../types";
 import { createTaskSchema } from "../schemas";
-import { useCreateTask } from "../api/use-create-task";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { ProjectAvatar } from "@/features/projects/components/project-avatar";
 import { MembersAvatar } from "@/features/members/components/members-avatar";
+import { useUpdateTask } from "../api/use-update-task";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -35,31 +35,34 @@ import { Button } from "@/components/ui/button";
 import { LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface CreateTaskFormProps {
+interface EditTaskFormProps {
   onCancel?: () => void;
   projectOptions: { id: string; name: string; imageUrl: string }[];
   memberOptions: { id: string; name: string }[];
+  initialValues: Task;
 }
 
-export const CreateTaskForm = ({
+export const EditTaskForm = ({
   onCancel,
   projectOptions,
   memberOptions,
-}: CreateTaskFormProps) => {
+  initialValues,
+}: EditTaskFormProps) => {
   const workspaceId = useWorkspaceId();
   const router = useRouter();
-  const { mutate, isPending } = useCreateTask();
+  const { mutate, isPending } = useUpdateTask();
 
   const form = useForm<z.infer<typeof createTaskSchema>>({
-    resolver: zodResolver(createTaskSchema.omit({ workspaceId: true })),
+    resolver: zodResolver(createTaskSchema.omit({ workspaceId: true, description: true })),
     defaultValues: {
-      workspaceId,
+      ...initialValues,
+      dueDate: initialValues.dueDate ? new Date(initialValues.dueDate) : undefined,
     },
   });
 
   const onSubmit = (values: z.infer<typeof createTaskSchema>) => {
     mutate(
-      { json: { ...values, workspaceId } },
+      { json: values, param: { taskId: initialValues.$id } },
       {
         onSuccess: () => {
           form.reset();
@@ -72,7 +75,7 @@ export const CreateTaskForm = ({
   return (
     <Card className="w-full h-full border-none shadow-none">
       <CardHeader className="flex p-7">
-        <CardTitle className="text-xl font-bold">Create a new task</CardTitle>
+        <CardTitle className="text-xl font-bold">Edit a task</CardTitle>
       </CardHeader>
       <div className="px-7">
         <DottedSeparator />
@@ -234,7 +237,7 @@ export const CreateTaskForm = ({
                 {isPending ? (
                   <LoaderCircle className="animate-spin" />
                 ) : (
-                  "Create Task"
+                  "Save Changes"
                 )}
               </Button>
             </div>

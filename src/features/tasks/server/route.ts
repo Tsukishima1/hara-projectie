@@ -11,6 +11,79 @@ import { createAdminClient } from "@/lib/appwrite";
 import { Project } from "@/features/projects/types";
 
 const app = new Hono()
+.delete(
+  "/:taskId",
+  sessionMiddleware,
+  async (c) => {
+    const user = c.get("user");
+    const databases = c.get("databases");
+
+    const { taskId } = c.req.param();
+
+    const task = await databases.getDocument<Task>( // 通过 projectId 获取项目
+      DATABASE_ID,
+      TASKS_ID,
+      taskId,
+    );
+
+    const member = await getMember({
+      databases,
+      workspaceId: task.workspaceId,
+      userId: user.$id,
+    })
+
+    if(!member) return c.json({error: "Unauthorized"}, 401);
+
+    await databases.deleteDocument(DATABASE_ID, TASKS_ID, taskId);
+
+    return c.json({data: { $id: task.$id }});
+  }
+)
+.patch(
+  "/:taskId",
+  sessionMiddleware,
+  zValidator("json", createTaskSchema.partial()), // 使用 partial() 方法将 schema 变为可选的，因为我们不需要所有字段都传递
+  async (c) => {
+    const user = c.get("user");
+    const databases = c.get("databases");
+
+    const {
+      name, status, description, projectId, dueDate, assigneeId
+    } = c.req.valid("json");
+
+    const { taskId } = c.req.param();
+
+    const existingTask = await databases.getDocument<Task>(
+      DATABASE_ID,
+      TASKS_ID,
+      taskId,
+    )
+
+    const member = await getMember({
+      databases,
+      workspaceId: existingTask.workspaceId,
+      userId: user.$id,
+    })
+
+    if(!member) return c.json({error: "Unauthorized"}, 401);
+
+    const task = await databases.updateDocument(
+      DATABASE_ID, 
+      TASKS_ID, 
+      taskId,
+      {
+        name,
+        status,
+        projectId,
+        dueDate,
+        assigneeId,
+        description,
+      }
+    );
+
+    return c.json({data: task});
+  }
+)
 .get(
   "/",
   sessionMiddleware,
@@ -184,6 +257,58 @@ const app = new Hono()
 
     return c.json({ data: task });
   }
-);
+)
+.get(
+  "/:taskId",
+  sessionMiddleware,
+  async(c)=>{
+    const currentUser = c.get("user");
+    const databases = c.get("databases");
+    const { users } = await createAdminClient();
+    const { taskId } = c.req.param();
+
+    const task = await databases.getDocument<Task>(
+      DATABASE_ID,
+      TASKS_ID,
+      taskId,
+    )
+
+    const currentMember = await getMember({ // 获取当前用户的信息，如果不是项目成员则返回 401
+      databases,
+      workspaceId: task.workspaceId,
+      userId: currentUser.$id,
+    })
+
+    if(!currentMember) return c.json({error: "Unauthorized"}, 401);
+
+    const project = await databases.getDocument<Project> ( // 根据 projectId 获取项目
+      DATABASE_ID,
+      PROJECTS_ID,
+      task.projectId,
+    );
+
+    const member = await databases.getDocument( // 根据 assigneeId 获取负责人信息
+      DATABASE_ID,
+      MEMBERS_ID,
+      task.assigneeId,
+    );
+
+    const user = await users.get(member.userId); // 根据 member 中的 userId 获取更具体的用户信息
+
+    const assignee = { // assignee 中只有 userId，我们需要展示更多的用户信息
+      ...member,
+      name: user.name,
+      email: user.email,
+    }
+
+    return c.json({
+      data: {
+        ...task,
+        project,
+        assignee,
+      }
+    })
+  }
+)
 
 export default app;
