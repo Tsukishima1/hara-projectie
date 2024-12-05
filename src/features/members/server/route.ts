@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/appwrite";
 import { getMember } from "../utils";
 import { DATABASE_ID, MEMBERS_ID } from "@/config";
 import { Query } from "node-appwrite";
-import { MemberRole } from "../types";
+import { Member, MemberRole } from "../types";
 
 const app = new Hono()
   // 获取当前用户的所有工作区
@@ -37,7 +37,7 @@ const app = new Hono()
         );
       }
 
-      const members = await databases.listDocuments(DATABASE_ID, MEMBERS_ID, [
+      const members = await databases.listDocuments<Member>(DATABASE_ID, MEMBERS_ID, [
         Query.equal("workspaceId", workspaceId), // 查询当前工作区的成员, 以 workspaceId 为条件
       ]);
 

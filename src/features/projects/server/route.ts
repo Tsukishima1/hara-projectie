@@ -89,7 +89,7 @@ const app = new Hono()
         return c.json({ error: "Unauthorized" }, 401);
       }
 
-      const projects = await databases.listDocuments(DATABASE_ID, PROJECTS_ID, [
+      const projects = await databases.listDocuments<Project>(DATABASE_ID, PROJECTS_ID, [
         Query.equal("workspaceId", workspaceId),
         Query.orderDesc("$createdAt"),
       ]);
@@ -360,7 +360,7 @@ const app = new Hono()
 
       const overdueTasksCount = thisMonthOverdueTasks.total;
       const overdueTasksDifference = overdueTasksCount-lastMonthOverdueTasks.total;
-      
+
       return c.json({
         data: {
           taskCount,
