@@ -37,6 +37,46 @@ const app = new Hono()
     );
     return c.json({ data: workspaces });
   })
+  .get("/:workspaceId", sessionMiddleware, async (c) => {
+    const databases = c.get("databases");
+    const user = c.get("user");
+
+    const { workspaceId } = c.req.param();
+
+    const member = await getMember({
+      databases,
+      workspaceId,
+      userId: user.$id,
+    });
+
+    if (!member) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const workspace = await databases.getDocument<Workspace>(
+      DATABASE_ID,
+      WORKSPACES_ID,
+      workspaceId
+    );
+    
+    return c.json({ data: workspace });
+  })
+  .get("/:workspaceId/info", sessionMiddleware, async (c) => {
+    const databases = c.get("databases");
+    const { workspaceId } = c.req.param();
+
+    const workspace = await databases.getDocument<Workspace>(
+      DATABASE_ID,
+      WORKSPACES_ID,
+      workspaceId
+    );
+    
+    return c.json({ data: {
+      $id: workspace.$id,
+      name: workspace.name,
+      imageUrl: workspace.imageUrl,
+    } });
+  })
   .post(
     "/",
     sessionMiddleware,
@@ -221,16 +261,17 @@ const app = new Hono()
         DATABASE_ID,
         WORKSPACES_ID,
         workspaceId
-      )
+      );
 
-      if (workspace.inviteCode!==code) {
+      if (workspace.inviteCode !== code) {
         return c.json({ error: "Invalid invite code" }, 400);
       }
 
-      await databases.createDocument( // 创建一个新的文档，表示用户加入了工作区
-        DATABASE_ID, 
-        MEMBERS_ID, 
-        ID.unique(), 
+      await databases.createDocument(
+        // 创建一个新的文档，表示用户加入了工作区
+        DATABASE_ID,
+        MEMBERS_ID,
+        ID.unique(),
         {
           userId: user.$id,
           workspaceId,
