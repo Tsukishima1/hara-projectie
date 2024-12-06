@@ -20,8 +20,7 @@ export const useLogout = () => {
     onSuccess: () => {
       toast.success("Logged out successfully");
       router.refresh();
-      queryClient.invalidateQueries({ queryKey: ["current"] });
-      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+      queryClient.invalidateQueries();
       // 确保用户界面中的工作区数据是最新的
     },
     onError: (error) => {

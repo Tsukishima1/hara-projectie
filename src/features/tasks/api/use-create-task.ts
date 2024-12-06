@@ -17,6 +17,7 @@ export const useCreateTask = () => {
     },
     onSuccess: () => {
       toast.success("Task created successfully");
+      queryClient.invalidateQueries({ queryKey: ["project-analytics"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       // 让页面刷新，重新获取数据
     },
