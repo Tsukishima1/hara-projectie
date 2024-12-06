@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader, PlusIcon } from "lucide-react";
 import { TaskStatus } from "../types";
+import { useProjectId } from "@/features/projects/hooks/use-project-id";
 import { useGetTasks } from "../api/use-get-tasks";
 import { useBulkUpdateTasks } from "../api/use-bulk-update-tasks";
 import { useTaskFilters } from "../hooks/use-task-filters";
@@ -38,9 +39,10 @@ export const TaskViewSwitcher = ({
   });
 
   const workspaceId = useWorkspaceId();
+  const paramProjectId = useProjectId();
   const { data: tasks, isLoading: isLoadingTasks } = useGetTasks({
     workspaceId,
-    projectId,
+    projectId: paramProjectId || projectId,
     status,
     assigneeId,
     dueDate,

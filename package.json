@@ -30,7 +30,7 @@
     "clsx": "^2.1.1",
     "date-fns": "3.00",
     "hara-projectie": "file:",
-    "hono": "4.6.3",
+    "hono": "^4.6.12",
     "lucide-react": "^0.453.0",
     "next": "14.2.15",
     "next-themes": "^0.3.0",
